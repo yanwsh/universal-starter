@@ -72,10 +72,14 @@ const { gzipSync } = require('zlib');
 const accepts = require('accepts');
 const { compressSync } = require('iltorb');
 const interceptor = require('express-interceptor');
+const compressible = require("compressible");
 
 app.use(interceptor((req, res)=>({
   // don't compress responses with this request header
-  isInterceptable: () => (!req.headers['x-no-compression']),
+  isInterceptable: () => {
+    const contentType = res.getHeader('Content-Type');
+    return !req.headers['x-no-compression'] && contentType !== undefined && compressible(contentType);
+  },
   intercept: ( body, send ) => {
     const encodings  = new Set(accepts(req).encodings());
     const bodyBuffer = new Buffer(body);
